@@ -1,5 +1,5 @@
 import axios from 'axios';
-import { proxy } from '../config'; 
+import { key, proxy } from '../config'; 
 
 export default class Recipe {
     constructor(id) {
@@ -7,16 +7,17 @@ export default class Recipe {
     };
     async getRecipe() {
         try {
-            const res = await axios(`${proxy}https://www.food2fork.com/api/get?key=${process.env.F2F_API}&rId=${this.id}`);
+            const res = await axios(`${proxy}https://www.food2fork.com/api/get?key=${key}&rId=${this.id}`);
             this.title = res.data.recipe.title; 
             this.author = res.data.recipe.publisher; 
             this.img = res.data.recipe.image_url; 
             this.url = res.data.recipe.source_url; 
-            this.ingredients = res.data.recipe.ingredients; 
+            this.ingredients = res.data.recipe.ingredients;  
         } catch (error) {
             console.log(error);
             alert('Something went wrong! :('); 
         }
+        
     } 
 
     calcTime() {
@@ -33,6 +34,7 @@ export default class Recipe {
     parseIngredients() {
         const unitsLong = ['tablespoons', 'tablespoon', 'ounces', 'ounce', 'teaspoons', 'teaspoon', 'cups', 'pounds'];
         const unitsShort = ['tbsp', 'tbsp', 'oz', 'oz', 'tsp', 'tsp', 'cup', 'pound']; 
+        const units = [...unitsShort, 'g', 'kg'];
         const newIngredients = this.ingredients.map(el=>{
             //uniform ingredients
             let ingredient = el.toLowerCase(); 
@@ -46,7 +48,7 @@ export default class Recipe {
             //1 create an array of the ingredient string (separated by a space)
             const arrIng = ingredient.split(' '); 
             //find the index of the unit if there is one to find (returns -1 if no unit found)
-            const unitIndex = arrIng.findIndex(el2 => unitsShort.includes(el2)); 
+            const unitIndex = arrIng.findIndex(el2 => units.includes(el2)); 
             //sorting different scenarios
             let objIng; //returned object defined outside of if statement 
             //there is a unit found
@@ -89,6 +91,18 @@ export default class Recipe {
         });
         this.ingredients = newIngredients; 
     }
+    updateServings(type) {
+        //update servings
+        const newServings = type === 'dec' ? this.servings - 1 : this.servings + 1; 
+        //update ingredients
+        this.ingredients.forEach(ing => {
+            ing.count *= (newServings / this.servings);
+        });
+
+        this.servings = newServings; 
+    }
+
 }
+
 
 
